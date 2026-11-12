@@ -5,20 +5,17 @@
 # published build tree, configuring, building, testing, packaging, loading the
 # result into Slicer and uploading the package.
 #
-# There is no schedule: the Slicer repository sends a "slicer-nightly"
-# repository_dispatch when it publishes a new nightly, which only reaches this
-# workflow on the default branch. That needs this repository listed in the
-# Slicer repository's SLICER_NIGHTLY_CONSUMERS variable and the Slicer GitHub
-# App installed here. See
-# Docs/developer_guide/build_instructions/github_actions.md in Slicer.
+# There is no schedule: when the Slicer repository publishes a new nightly it
+# starts this workflow (by its file name, through workflow_dispatch, on the
+# default branch) in every repository where the Slicer nightly GitHub App is
+# installed. See Docs/developer_guide/build_instructions/github_actions.md in
+# Slicer.
 name: Build against the Slicer nightly
 
 on:
   push:
   pull_request:
   workflow_dispatch:
-  repository_dispatch:
-    types: [slicer-nightly]
 
 permissions:
   contents: read
