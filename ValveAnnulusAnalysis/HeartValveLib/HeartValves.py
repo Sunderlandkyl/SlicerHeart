@@ -90,6 +90,9 @@ def registerCustomLayouts():
   before opening the module GUI."""
 
   layoutManager = slicer.app.layoutManager()
+  if not layoutManager:
+    # no main window (e.g. --no-main-window tests), so there is no layout to register into
+    return
 
   customLayout = (
     "<layout type=\"vertical\">"
