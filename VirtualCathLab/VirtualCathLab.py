@@ -651,6 +651,9 @@ class VirtualCathLabLogic(CardiacDeviceSimulatorLogic):
   @classmethod
   def addViewLayouts(cls):
     layoutManager = slicer.app.layoutManager()
+    if not layoutManager:
+      # no main window (e.g. --no-main-window tests), so there is no layout to register into
+      return
     layoutLogic = layoutManager.layoutLogic()
     if not layoutLogic.GetLayoutNode().SetLayoutDescription(VirtualCathLabLogic.C_ARM_GENERIC_LAYOUT_ID, VirtualCathLabLogic.C_ARM_GENERIC_LAYOUT_DESCRIPTION):
       layoutLogic.GetLayoutNode().AddLayoutDescription(VirtualCathLabLogic.C_ARM_GENERIC_LAYOUT_ID, VirtualCathLabLogic.C_ARM_GENERIC_LAYOUT_DESCRIPTION)
