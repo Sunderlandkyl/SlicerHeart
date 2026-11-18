@@ -4,12 +4,6 @@
 # Everything the build needs is in the workflow Slicer provides: restoring the
 # published build tree, configuring, building, testing, packaging, loading the
 # result into Slicer and uploading the package.
-#
-# There is no schedule: when the Slicer repository publishes a new nightly it
-# starts this workflow (by its file name, through workflow_dispatch, on the
-# default branch) in every repository where the Slicer nightly GitHub App is
-# installed. See Docs/developer_guide/build_instructions/github_actions.md in
-# Slicer.
 name: Build against the Slicer nightly
 
 on:
@@ -25,10 +19,12 @@ jobs:
     permissions:
       contents: write
     # On Slicer/Slicer this is Slicer/Slicer/.github/workflows/extension-build.yml@main
-    uses: Sunderlandkyl/Slicer/.github/workflows/extension-build.yml@exp/extension-workflow
+    uses: Sunderlandkyl/Slicer/.github/workflows/extension-build.yml@ci/github-actions-build
     with:
-      platforms: linux,macos,windows
+      # web: for SlicerWeb, against the web build tree of the nightly.
+      platforms: linux,macos,windows,web
       slicer-repository: Sunderlandkyl/Slicer
-      slicer-ref: exp/extension-workflow
-      # A pull request's token cannot write to the releases.
+      slicer-ref: ci/github-actions-build
+      # To the nightly release, which says what Slicer each package was built
+      # against; a pull request's token cannot write to the releases.
       publish: ${{ github.event_name != 'pull_request' }}
