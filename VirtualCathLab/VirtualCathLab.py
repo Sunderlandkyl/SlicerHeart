@@ -165,7 +165,8 @@ class VirtualCathLabWidget(CardiacDeviceSimulatorWidget):
   def cleanup(self):
     self.removeDeviceControlShortcutKeys()
     CardiacDeviceSimulatorWidget.cleanup(self)
-    self.disconnect()
+    if self.setupSuccessful:
+      self.disconnect()
 
   def onDeviceClassModified(self, caller, event):
     super().onDeviceClassModified(caller, event)
@@ -651,6 +652,9 @@ class VirtualCathLabLogic(CardiacDeviceSimulatorLogic):
   @classmethod
   def addViewLayouts(cls):
     layoutManager = slicer.app.layoutManager()
+    if not layoutManager:
+      # No main window, there are no views
+      return
     layoutLogic = layoutManager.layoutLogic()
     if not layoutLogic.GetLayoutNode().SetLayoutDescription(VirtualCathLabLogic.C_ARM_GENERIC_LAYOUT_ID, VirtualCathLabLogic.C_ARM_GENERIC_LAYOUT_DESCRIPTION):
       layoutLogic.GetLayoutNode().AddLayoutDescription(VirtualCathLabLogic.C_ARM_GENERIC_LAYOUT_ID, VirtualCathLabLogic.C_ARM_GENERIC_LAYOUT_DESCRIPTION)
@@ -1640,6 +1644,9 @@ class VirtualCathLabLogic(CardiacDeviceSimulatorLogic):
     Update C-arm view settings and add angle positioner widgets
     """
     layoutManager = slicer.app.layoutManager()
+    if not layoutManager:
+      # No main window, there are no views
+      return
     for threeDViewIndex in range(layoutManager.threeDViewCount):
       view = layoutManager.threeDWidget(threeDViewIndex).threeDView()
 

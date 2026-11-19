@@ -148,6 +148,10 @@ class CardiacDeviceSimulatorWidget(ScriptedLoadableModuleWidget):
   def cleanup(self):
     for deviceWidget in self.deviceWidgets:
       deviceWidget.cleanup()
+    if not self.setupSuccessful:
+      # The module GUI has not been set up (for example, because a required extension
+      # is not available), so there is no parameter node selector and nothing is observed.
+      return
     self._observeParameterNode(None)
 
   def enter(self):
