@@ -388,9 +388,16 @@ def remeshPolyData(poly, nVertices, subdivide):
   import pyacvd
   import pyvista as pv
   import vtk
-  # Clustering requires a mesh of triangles only (recent pyacvd versions refuse any other)
+  # Clustering requires a mesh of triangles only (recent pyacvd versions refuse any other),
+  # also after it has subdivided the mesh and merged coincident points: degenerate triangles
+  # would become lines or points then, so they are removed first.
+  cleaner = vtk.vtkCleanPolyData()
+  cleaner.SetInputData(poly)
+  cleaner.ConvertPolysToLinesOff()
+  cleaner.ConvertLinesToPointsOff()
+  cleaner.ConvertStripsToPolysOff()
   triangulator = vtk.vtkTriangleFilter()
-  triangulator.SetInputData(poly)
+  triangulator.SetInputConnection(cleaner.GetOutputPort())
   triangulator.PassLinesOff()
   triangulator.PassVertsOff()
   triangulator.Update()
