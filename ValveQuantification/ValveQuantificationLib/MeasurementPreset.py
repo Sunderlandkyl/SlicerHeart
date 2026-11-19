@@ -1665,7 +1665,8 @@ class MeasurementPreset(object):
       reason = "no reference image geometry"
     else:
       referenceGeometryImage = vtkSegmentationCore.vtkOrientedImageData()
-      vtkSegmentationCore.vtkSegmentationConverter.DeserializeImageGeometry(referenceGeometryString, referenceGeometryImage)
+      # Only the geometry is needed: voxels are not allocated (the geometry may be of billions of voxels)
+      vtkSegmentationCore.vtkSegmentationConverter.DeserializeImageGeometry(referenceGeometryString, referenceGeometryImage, False)
       if not self.isValidImageGeometry(referenceGeometryImage):
         reason = "reference image geometry with an empty extent"
       else:
