@@ -959,6 +959,9 @@ class ValveAnnulusAnalysisTest(ScriptedLoadableModuleTest):
     """
     slicer.mrmlScene.Clear(0)
 
+    # The tests drive the module GUI, which is created when the module is first opened
+    slicer.util.selectModule('ValveAnnulusAnalysis')
+
     self.valveVolumeSequenceBrowser = self.loadValveSampleData(sampleDataName = "Mitral")
 
   def runTest(self):

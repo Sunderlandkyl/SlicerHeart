@@ -1316,6 +1316,15 @@ class ValveSegmentationTest(ScriptedLoadableModuleTest):
     from HeartValveLib.helpers import getAllHeartValveNodes
     valveNodes = list(getAllHeartValveNodes())
     if len(valveNodes) == 0:
+      # The test is not run in a scene that has a valve (for example, when it is run by CTest):
+      # define the valve of the ValveAnnulusAnalysis test, which has two time points and an annulus contour.
+      import ValveAnnulusAnalysis
+      valveAnnulusAnalysisTest = ValveAnnulusAnalysis.ValveAnnulusAnalysisTest()
+      valveAnnulusAnalysisTest.setUp()
+      valveAnnulusAnalysisTest.test_Mitral()
+      slicer.util.selectModule('ValveSegmentation')
+      valveNodes = list(getAllHeartValveNodes())
+    if len(valveNodes) == 0:
       logging.error("No heart valve nodes found")
       return False
 
