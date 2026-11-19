@@ -57,6 +57,10 @@ class HeartValveWorkflowTestTest(SlicerHeartTestCase):
   PHASES = {"mid-systole": "MS", "end-diastole": "ED"}
   SEGMENTS = NewFormatValveFactory.DEFAULT_SEGMENTS  # (segmentId, name, color, center in units of scale)
   RTOL = 1e-3
+  # The atrial leaflet surface is remeshed and smoothed iteratively, which amplifies the small differences
+  # of a surface that is regenerated after the scene is reloaded: its area is reproduced within 2%
+  # (17.5 and 17.7 before and after reloading on macOS; within the usual tolerance on the other platforms).
+  REMESHED_SURFACE_RTOL = 2e-2
 
   # ---------------------------------------------------------------------------------------------
   # Fixture
@@ -292,7 +296,8 @@ class HeartValveWorkflowTestTest(SlicerHeartTestCase):
       # The tables hold rounded values: allow one unit of the last printed decimal besides the
       # relative tolerance (a 1.5 mm3 leaflet volume printed with one decimal may come back as 1.6)
       decimals = len(expectedValue.split(".")[1]) if "." in expectedValue else 0
-      self.assertAlmostEqual(a, e, delta=abs(e) * self.RTOL + 1.01 * 10 ** (-decimals), msg=f"{msg}: {name}")
+      rtol = self.REMESHED_SURFACE_RTOL if name.startswith("Leaflet area (atrial)") else self.RTOL
+      self.assertAlmostEqual(a, e, delta=abs(e) * rtol + 1.01 * 10 ** (-decimals), msg=f"{msg}: {name}")
 
   # ---------------------------------------------------------------------------------------------
   # Inventory of everything the workflow wrote (compared across save/reload)
