@@ -1058,6 +1058,18 @@ class ValveQuantificationTest(ScriptedLoadableModuleTest):
 
     presetName = "Mitral valve"
 
+    # The valves that are measured are the ones that the ValveAnnulusAnalysis test defines.
+    # When this test is not run after that one in the same application (for example, when
+    # run by CTest), the valves are defined first.
+    if self.getHeartValveNode("Mitral") is None or self.getHeartValveNode("Aortic") is None:
+      self.delayDisplay("Define valves.")
+      import ValveAnnulusAnalysis
+      valveAnnulusAnalysisTest = ValveAnnulusAnalysis.ValveAnnulusAnalysisTest()
+      valveAnnulusAnalysisTest.setUp()
+      valveAnnulusAnalysisTest.test_Mitral()
+
+    slicer.util.selectModule('ValveQuantification')
+
     mitralValveNode = self.getHeartValveNode("Mitral")
     self.assertIsNotNone(mitralValveNode)
 
