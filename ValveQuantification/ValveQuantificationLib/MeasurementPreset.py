@@ -1845,12 +1845,43 @@ class MeasurementPreset(object):
     normals.ConsistencyOn()
     normals.AutoOrientNormalsOn()
 
-    distanceFilter = vtk.vtkDistancePolyDataFilter()
-    distanceFilter.SetInputData(0, basePolyData)
-    distanceFilter.SetInputConnection(1, normals.GetOutputPort())
-    distanceFilter.Update()
+    normals.Update()
 
-    return distanceFilter.GetOutput()
+    # Signed distance of the points and of the cell centers, as vtkDistancePolyDataFilter computes them.
+    # That filter is not used: it crashes the application intermittently for some surfaces.
+    implicitDistance = vtk.vtkImplicitPolyDataDistance()
+    implicitDistance.SetInput(normals.GetOutput())
+
+    basePolyDataWithDistance = vtk.vtkPolyData()
+    basePolyDataWithDistance.DeepCopy(basePolyData)
+
+    numberOfPoints = basePolyDataWithDistance.GetNumberOfPoints()
+    pointDistances = vtk.vtkDoubleArray()
+    pointDistances.SetName("Distance")
+    pointDistances.SetNumberOfValues(numberOfPoints)
+    for pointIndex in range(numberOfPoints):
+      pointDistances.SetValue(pointIndex, implicitDistance.EvaluateFunction(basePolyDataWithDistance.GetPoint(pointIndex)))
+    basePolyDataWithDistance.GetPointData().AddArray(pointDistances)
+    basePolyDataWithDistance.GetPointData().SetActiveScalars("Distance")
+
+    numberOfCells = basePolyDataWithDistance.GetNumberOfCells()
+    cellDistances = vtk.vtkDoubleArray()
+    cellDistances.SetName("Distance")
+    cellDistances.SetNumberOfValues(numberOfCells)
+    cellPointIds = vtk.vtkIdList()
+    for cellIndex in range(numberOfCells):
+      basePolyDataWithDistance.GetCellPoints(cellIndex, cellPointIds)
+      numberOfCellPoints = cellPointIds.GetNumberOfIds()
+      cellCenter = [0.0, 0.0, 0.0]
+      for cellPointIndex in range(numberOfCellPoints):
+        cellPoint = basePolyDataWithDistance.GetPoint(cellPointIds.GetId(cellPointIndex))
+        for axis in range(3):
+          cellCenter[axis] += cellPoint[axis] / numberOfCellPoints
+      cellDistances.SetValue(cellIndex, implicitDistance.EvaluateFunction(cellCenter) if numberOfCellPoints else 0.0)
+    basePolyDataWithDistance.GetCellData().AddArray(cellDistances)
+    basePolyDataWithDistance.GetCellData().SetActiveScalars("Distance")
+
+    return basePolyDataWithDistance
 
   def addModelColoredBySignedDistance(self, measurementName, valveModel, allLeafletSurfacePolyDataWithDistance):
 
