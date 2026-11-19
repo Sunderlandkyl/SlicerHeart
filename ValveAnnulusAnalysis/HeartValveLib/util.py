@@ -139,7 +139,14 @@ def remeshPolyData(poly, nVertices, subdivide):
     slicer.util.pip_install('pyacvd')
   import pyacvd
   import pyvista as pv
-  wrapped = pv.wrap(poly)
+  import vtk
+  # Clustering requires a mesh of triangles only (recent pyacvd versions refuse any other)
+  triangulator = vtk.vtkTriangleFilter()
+  triangulator.SetInputData(poly)
+  triangulator.PassLinesOff()
+  triangulator.PassVertsOff()
+  triangulator.Update()
+  wrapped = pv.wrap(triangulator.GetOutput())
   clus = pyacvd.Clustering(wrapped)
   clus.subdivide(subdivide)
   clus.cluster(nVertices)
