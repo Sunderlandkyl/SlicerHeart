@@ -9,7 +9,12 @@ from HeartValveLib.Constants import VALVE_MASK_SEGMENT_ID
 from HeartValveLib import getAllSegmentIDs
 
 
-import pandas as pd
+try:
+  import pandas as pd
+except ImportError:
+  # pandas is not bundled with Slicer
+  slicer.util.pip_install("pandas")
+  import pandas as pd
 
 
 # TODO: collect validation functions and create valve completion class
