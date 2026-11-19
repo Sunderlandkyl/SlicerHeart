@@ -1067,6 +1067,7 @@ class ValveQuantificationTest(ScriptedLoadableModuleTest):
       valveAnnulusAnalysisTest = ValveAnnulusAnalysis.ValveAnnulusAnalysisTest()
       valveAnnulusAnalysisTest.setUp()
       valveAnnulusAnalysisTest.test_Mitral()
+      valveAnnulusAnalysisTest.test_Aortic()
 
     slicer.util.selectModule('ValveQuantification')
 
