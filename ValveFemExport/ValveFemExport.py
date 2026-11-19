@@ -1939,37 +1939,26 @@ class ValveFemExportTest(ScriptedLoadableModuleTest):
 
     self.delayDisplay("Starting the test")
 
-    # Get/create input data
-
-    import SampleData
-    inputVolume = SampleData.downloadFromURL(
-      nodeNames='MRHead',
-      fileNames='MR-Head.nrrd',
-      uris='https://github.com/Slicer/SlicerTestingData/releases/download/MD5/39b01631b7b38232a220007230624c8e',
-      checksums='MD5:39b01631b7b38232a220007230624c8e')[0]
-    self.delayDisplay('Finished with download and loading')
-
-    inputScalarRange = inputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(inputScalarRange[0], 0)
-    self.assertEqual(inputScalarRange[1], 279)
-
-    outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
-    threshold = 50
-
-    # Test the module logic
-
     logic = ValveFemExportLogic()
 
-    # Test algorithm with non-inverted threshold
-    logic.run(inputVolume, outputVolume, threshold, True)
-    outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-    self.assertEqual(outputScalarRange[1], threshold)
+    # The leaflet surface grid wraps around along U: indices along U are computed modulo the resolution
+    gridResolution = [10, 4]
+    self.assertEqual(logic.subtractWrappingGridIndices(7, 3, gridResolution), 4)
+    self.assertEqual(logic.subtractWrappingGridIndices(3, 3, gridResolution), 0)
+    self.assertEqual(logic.subtractWrappingGridIndices(1, 8, gridResolution), 3)
+    self.assertEqual(logic.incrementWrappingGridIndex(3, 2, gridResolution), 5)
+    self.assertEqual(logic.incrementWrappingGridIndex(9, 2, gridResolution), 1)
+    for index in range(gridResolution[0]):
+      for increment in range(1, gridResolution[0]):
+        incrementedIndex = logic.incrementWrappingGridIndex(index, increment, gridResolution)
+        self.assertTrue(0 <= incrementedIndex < gridResolution[0])
+        self.assertEqual(logic.subtractWrappingGridIndices(incrementedIndex, index, gridResolution), increment)
 
-    # Test algorithm with inverted threshold
-    logic.run(inputVolume, outputVolume, threshold, False)
-    outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-    self.assertEqual(outputScalarRange[1], inputScalarRange[1])
+    # Each grid point has its own control point index
+    self.assertEqual(logic.controlPointIndex(0, 0, gridResolution), 0)
+    self.assertEqual(logic.controlPointIndex(3, 2, gridResolution), 23)
+    controlPointIndices = {logic.controlPointIndex(u, v, gridResolution)
+                           for u in range(gridResolution[0]) for v in range(gridResolution[1])}
+    self.assertEqual(len(controlPointIndices), gridResolution[0] * gridResolution[1])
 
     self.delayDisplay('Test passed')
