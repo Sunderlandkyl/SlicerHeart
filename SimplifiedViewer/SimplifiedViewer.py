@@ -26,7 +26,10 @@ class SimplifiedViewer(ScriptedLoadableModule):
         ScriptedLoadableModule.__init__(self, parent)
         self.parent.title = _("Simplified Viewer")
         self.parent.categories = [translate("qSlicerAbstractCoreModule", "Examples")]
-        self.parent.dependencies = ["UserStatistics"]
+        # UserStatistics (Sandbox extension) is used when it is available (for closing the application
+        # when idle), see setup(). It is not a module dependency, so that the module can be loaded
+        # without it, for example in the tests, where the modules of other extensions are not loaded.
+        self.parent.dependencies = []
         self.parent.contributors = ["Kyle Sunderland (PerkLab)", "Andras Lasso (PerkLab)", "Christian Herz (CHOP)", "Matt Jolley (UPenn)"]
         self.parent.helpText = _("Simplified viewer module for SlicerHeart.")
         # TODO: replace with organization, grant and thanks
@@ -181,10 +184,19 @@ class SimplifiedViewerWidget(ScriptedLoadableModuleWidget, VTKObservationMixin):
         self.clippingAvailable = False
         self.buttonSize = 64
         self.spacing = 3
+        self.idleDetectionEventFilter = None
+        self.idleCloseWarningDialog = None
+        self.blockGUIStateSaver = None
 
     def setup(self) -> None:
         """Called when the user opens the module the first time and the widget is initialized."""
         ScriptedLoadableModuleWidget.setup(self)
+
+        if slicer.util.mainWindow() is None:
+            # The module rearranges the main window and its views, there is nothing to set up without it
+            # (for example, in tests that are run without main window).
+            logging.info("Simplified Viewer is not set up: there is no main window")
+            return
 
         self.resizeFilter = ResizeFilter(slicer.util.mainWindow(), self)
         self.idleCloseWarningDialog = None
