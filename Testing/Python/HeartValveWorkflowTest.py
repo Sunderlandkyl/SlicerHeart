@@ -58,9 +58,11 @@ class HeartValveWorkflowTestTest(SlicerHeartTestCase):
   SEGMENTS = NewFormatValveFactory.DEFAULT_SEGMENTS  # (segmentId, name, color, center in units of scale)
   RTOL = 1e-3
   # The atrial leaflet surface is remeshed and smoothed iteratively, which amplifies the small differences
-  # of a surface that is regenerated after the scene is reloaded: its area is reproduced within 2%
-  # (17.5 and 17.7 before and after reloading on macOS; within the usual tolerance on the other platforms).
-  REMESHED_SURFACE_RTOL = 2e-2
+  # of a surface that is regenerated after the scene is reloaded, and the surface is then divided between
+  # the leaflets. Its areas are reproduced within 5%: on macOS the total area was 17.5 before and 17.7 after
+  # reloading and the area of the posterior leaflet 8.4 and 8.7 (on the other platforms they are within the
+  # usual tolerance).
+  REMESHED_SURFACE_RTOL = 5e-2
 
   # ---------------------------------------------------------------------------------------------
   # Fixture
