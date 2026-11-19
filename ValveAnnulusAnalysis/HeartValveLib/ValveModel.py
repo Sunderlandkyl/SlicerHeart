@@ -79,6 +79,9 @@ class ValveModel:
       to a complete heart cycle."""
       if not self.heartValveNode:
         raise RuntimeError("getValveBrowserNode failed: invalid self.heartValveNode")
+      if not hasattr(slicer.modules, "sequences"):
+        # The application is shutting down, the Sequences module is already unloaded
+        return None
       valveBrowserNode = slicer.modules.sequences.logic().GetFirstBrowserNodeForProxyNode(self.heartValveNode)
       return valveBrowserNode
 
@@ -215,7 +218,8 @@ class ValveModel:
       return self._heartValveNodeReferencedSequenceNode("LeafletSegmentation")
 
     def isNodeSpecifiedForCurrentTimePoint(self, proxyNode):
-      sequenceNode = self.valveBrowserNode.GetSequenceNode(proxyNode)
+      valveBrowserNode = self.valveBrowserNode
+      sequenceNode = valveBrowserNode.GetSequenceNode(proxyNode) if valveBrowserNode else None
       if not sequenceNode:
         return False
       valveItemIndex, indexValue = self.valveBrowser.getDisplayedHeartValveSequenceIndexAndValue()

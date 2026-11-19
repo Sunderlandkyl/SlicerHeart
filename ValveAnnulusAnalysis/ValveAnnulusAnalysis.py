@@ -23,7 +23,9 @@ class ValveAnnulusAnalysis(ScriptedLoadableModule):
     ScriptedLoadableModule.__init__(self, parent)
     self.parent.title = "Valve Annulus Analysis"
     self.parent.categories = ["Cardiac"]
-    self.parent.dependencies = []
+    # Valves are stored in sequences: the Sequences module must be loaded before this module,
+    # and unloaded after it (cleanup of the module widget accesses the valve of the scene)
+    self.parent.dependencies = ["Sequences"]
     self.parent.contributors = ["Andras Lasso (PerkLab), Christian Herz (CHOP), Matt Jolley (UPenn)"]
     self.parent.helpText = """Specify a valve and its annulus contour"""
     self.parent.acknowledgementText = """This file was originally developed by Andras Lasso, PerkLab."""
