@@ -1324,6 +1324,11 @@ class Analyze4DFlowLogic(ScriptedLoadableModuleLogic):
         if needMaskedMesh:
             maskedFlowFieldMesh = flowFieldMeshWorld.NewInstance()
             maskedFlowFieldMesh.DeepCopy(flowFieldMeshWorld)
+            # The copy gets cell links if the flow field mesh has them (they are built when the mesh is probed).
+            # They are not kept: when a mesh that has cell links is recorded into a sequence, an instance of the mesh
+            # is never released (VTK reports it as a leak when the application exits). They are rebuilt when needed.
+            if hasattr(maskedFlowFieldMesh, "SetLinks"):
+                maskedFlowFieldMesh.SetLinks(None)
             fullVelocityArray = vtk.util.numpy_support.vtk_to_numpy(maskedFlowFieldMesh.GetPointData().GetArray(velocityArrayName))
             if maskSegmentationNode and maskSegmentID:
                 insideVesselArrayFull = self._computeInsideSegmentMask(
