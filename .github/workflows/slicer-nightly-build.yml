@@ -6,7 +6,7 @@
 # result into Slicer and uploading the package.
 name: Build against the Slicer nightly
 # The platform in the name of the run: Slicer starts one run per platform.
-run-name: ${{ inputs.platforms && format('{0} - build against the Slicer nightly', inputs.platforms) || format('all platforms - {0}', github.event_name) }}
+run-name: ${{ inputs.source-ref && format('{0} - {1} (not published)', inputs.platforms || 'all platforms', inputs.source-ref) || inputs.platforms && format('{0} - build against the Slicer nightly', inputs.platforms) || format('all platforms - {0}', github.event_name) }}
 
 on:
   push:
@@ -17,6 +17,14 @@ on:
       # that no platform waits for another.
       platforms:
         description: "Platforms to build (comma separated; default: all)"
+        default: ""
+      # To try a branch that does not have this workflow. Built, tested and
+      # kept as artifacts of the run; not published.
+      source-ref:
+        description: "Branch, tag or commit to build instead of this branch (not published)"
+        default: ""
+      source-repository:
+        description: "Repository of that branch (default: this one), e.g. SlicerHeart/SlicerHeart"
         default: ""
 
 permissions:
@@ -33,6 +41,8 @@ jobs:
       platforms: ${{ inputs.platforms || 'linux,macos,windows,web' }}
       slicer-repository: Sunderlandkyl/Slicer
       slicer-ref: ci/github-actions-build
+      source-ref: ${{ inputs.source-ref }}
+      source-repository: ${{ inputs.source-repository }}
       # To the nightly release, which says what each package was built
       # against, each platform as soon as it is built. A commit to this branch
       # publishes, and so do the builds Slicer's Reconcile extensions workflow
