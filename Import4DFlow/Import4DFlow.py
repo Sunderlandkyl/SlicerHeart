@@ -1736,10 +1736,7 @@ class Import4DFlowLogic(ScriptedLoadableModuleLogic):
         if not hasattr(slicer.vtkMRMLSubjectHierarchyNode, "GetItemUIDNames"):
             raise RuntimeError("Anonymization feature requires a recent Slicer-5.7 version or later.")
 
-        # Anonymize nodes
-        nodes = scene.GetNodes()
-        for i in range(nodes.GetNumberOfItems()):
-            node = nodes.GetItemAsObject(i)
+        def anonymizeNode(node):
             # Remove MultiVolume.FrameFileList attribute from sequence nodes because they contain absolute file paths
             # that could potentially reveal patient name or IDs
             node.RemoveAttribute("MultiVolume.FrameFileList")
@@ -1748,6 +1745,17 @@ class Import4DFlowLogic(ScriptedLoadableModuleLogic):
             for attributeName in attributeNames:
                 if attributeName.startswith("DICOM"):
                     node.RemoveAttribute(attributeName)
+
+        # Anonymize nodes
+        nodes = scene.GetNodes()
+        for i in range(nodes.GetNumberOfItems()):
+            node = nodes.GetItemAsObject(i)
+            anonymizeNode(node)
+            # The nodes that a sequence stores are not in the scene. They have the attributes of the node
+            # that they were recorded from, and the proxy node gets them back when it is updated from the sequence.
+            if node.IsA("vtkMRMLSequenceNode"):
+                for dataNodeIndex in range(node.GetNumberOfDataNodes()):
+                    anonymizeNode(node.GetNthDataNode(dataNodeIndex))
 
         # Anonymize subject hierarchy items
         shNode = scene.GetSubjectHierarchyNode()
