@@ -677,27 +677,31 @@ class MeasurementPreset(object):
     pointsAbovePlane = pointsOnPositiveSideOfPlane
     pointsBelowPlane = ~pointsOnPositiveSideOfPlane
 
-    # ...[pointsAbovePlane] selects the points that are above the annulus plane
-    annulusTopPointIndex = distancesFromValvePlane[pointsAbovePlane].argmax()
-    annulusBottomPointIndex = distancesFromValvePlane[pointsBelowPlane].argmax()
-    annulusHeightAbove = distancesFromValvePlane[pointsAbovePlane][annulusTopPointIndex]
-    annulusHeightBelow = distancesFromValvePlane[pointsBelowPlane][annulusBottomPointIndex]
+    # ...[pointsAbovePlane] selects the points that are above the annulus plane.
+    # A flat annulus may have no point on a side of the plane: the height is zero on that side
+    # and there is no line to show.
+    annulusTopPointIndex = distancesFromValvePlane[pointsAbovePlane].argmax() if np.any(pointsAbovePlane) else None
+    annulusBottomPointIndex = distancesFromValvePlane[pointsBelowPlane].argmax() if np.any(pointsBelowPlane) else None
+    annulusHeightAbove = distancesFromValvePlane[pointsAbovePlane][annulusTopPointIndex] if annulusTopPointIndex is not None else 0.0
+    annulusHeightBelow = distancesFromValvePlane[pointsBelowPlane][annulusBottomPointIndex] if annulusBottomPointIndex is not None else 0.0
     self.addMeasurement({KEY_NAME: 'Annulus height', KEY_VALUE: "{:.1f}".format(annulusHeightAbove + annulusHeightBelow), KEY_UNIT: 'mm'})
     self.addMeasurement({KEY_NAME: 'Annulus height above', KEY_VALUE: "{:.1f}".format(annulusHeightAbove), KEY_UNIT: 'mm'})
     self.addMeasurement({KEY_NAME: 'Annulus height below', KEY_VALUE: "{:.1f}".format(annulusHeightBelow), KEY_UNIT: 'mm'})
 
     # Add annulus height lines
-    metricName = 'Annulus height (above)'
-    annulusTopLineModel = self.getOrAddMetricModelNode(valveModel, metricName)
-    annulusTopLineModel = self.createLineModel(metricName, annulusPoints[:,pointsAbovePlane][:,annulusTopPointIndex],
-      annulusPointsProjected[:,pointsAbovePlane][:,annulusTopPointIndex], currentModelNode=annulusTopLineModel)
-    self.applyProbeToRASAndMoveToMeasurementFolder(valveModel, annulusTopLineModel)
+    if annulusTopPointIndex is not None:
+      metricName = 'Annulus height (above)'
+      annulusTopLineModel = self.getOrAddMetricModelNode(valveModel, metricName)
+      annulusTopLineModel = self.createLineModel(metricName, annulusPoints[:,pointsAbovePlane][:,annulusTopPointIndex],
+        annulusPointsProjected[:,pointsAbovePlane][:,annulusTopPointIndex], currentModelNode=annulusTopLineModel)
+      self.applyProbeToRASAndMoveToMeasurementFolder(valveModel, annulusTopLineModel)
 
-    metricName = 'Annulus height (below)'
-    annulusBottomLineModel = self.getOrAddMetricModelNode(valveModel, metricName)
-    annulusBottomLineModel = self.createLineModel(metricName, annulusPoints[:,pointsBelowPlane][:,annulusBottomPointIndex],
-        annulusPointsProjected[:,pointsBelowPlane][:,annulusBottomPointIndex], currentModelNode=annulusBottomLineModel)
-    self.applyProbeToRASAndMoveToMeasurementFolder(valveModel, annulusBottomLineModel)
+    if annulusBottomPointIndex is not None:
+      metricName = 'Annulus height (below)'
+      annulusBottomLineModel = self.getOrAddMetricModelNode(valveModel, metricName)
+      annulusBottomLineModel = self.createLineModel(metricName, annulusPoints[:,pointsBelowPlane][:,annulusBottomPointIndex],
+          annulusPointsProjected[:,pointsBelowPlane][:,annulusBottomPointIndex], currentModelNode=annulusBottomLineModel)
+      self.applyProbeToRASAndMoveToMeasurementFolder(valveModel, annulusBottomLineModel)
 
     # Add annulus plane model
     metricName = 'Annulus plane'
