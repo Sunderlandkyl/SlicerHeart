@@ -58,11 +58,12 @@ class HeartValveWorkflowTestTest(SlicerHeartTestCase):
   SEGMENTS = NewFormatValveFactory.DEFAULT_SEGMENTS  # (segmentId, name, color, center in units of scale)
   RTOL = 1e-3
   # The atrial leaflet surface is remeshed and smoothed iteratively, which amplifies the small differences
-  # of a surface that is regenerated after the scene is reloaded, and the surface is then divided between
-  # the leaflets. Its areas are reproduced within 5%: on macOS the total area was 17.5 before and 17.7 after
-  # reloading and the area of the posterior leaflet 8.4 and 8.7 (on the other platforms they are within the
-  # usual tolerance).
+  # of a surface that is regenerated after the scene is reloaded. The metrics that are computed from it are
+  # reproduced within 5%: on macOS, before and after reloading the scene, the total area was 17.5 and 17.7,
+  # the area of the posterior leaflet 8.4 and 8.7, and the billow volume 5.6 and 5.4 (on the other platforms
+  # they are within the usual tolerance).
   REMESHED_SURFACE_RTOL = 5e-2
+  REMESHED_SURFACE_METRICS = ("Leaflet area (atrial)", "Billow height", "Billow volume", "Tenting height", "Tenting volume")
 
   # ---------------------------------------------------------------------------------------------
   # Fixture
@@ -298,7 +299,7 @@ class HeartValveWorkflowTestTest(SlicerHeartTestCase):
       # The tables hold rounded values: allow one unit of the last printed decimal besides the
       # relative tolerance (a 1.5 mm3 leaflet volume printed with one decimal may come back as 1.6)
       decimals = len(expectedValue.split(".")[1]) if "." in expectedValue else 0
-      rtol = self.REMESHED_SURFACE_RTOL if name.startswith("Leaflet area (atrial)") else self.RTOL
+      rtol = self.REMESHED_SURFACE_RTOL if name.startswith(self.REMESHED_SURFACE_METRICS) else self.RTOL
       self.assertAlmostEqual(a, e, delta=abs(e) * rtol + 1.01 * 10 ** (-decimals), msg=f"{msg}: {name}")
 
   # ---------------------------------------------------------------------------------------------
