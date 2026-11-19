@@ -256,8 +256,8 @@ def setupDefaultLayout(layoutId=CardiacFourUpViewLayoutId):
   setSliceViewsLink(sliceViewNames, oldLink, oldHotLink)
 
 def showSlices(show):
-  if not slicer.app.errorLogModel():
-    # shutting down
+  if not slicer.app.errorLogModel() or not slicer.app.layoutManager():
+    # shutting down, or there is no main window
     return
 
   # If slice views are linked then changing properties would repeatedly change
