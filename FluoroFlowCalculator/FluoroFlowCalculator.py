@@ -434,7 +434,7 @@ class FluoroFlowCalculatorLogic(ScriptedLoadableModuleLogic):
 
       def getOrCreateSegmentIdByName(segmentName):
         return segmentation.GetSegmentIdBySegmentName(segmentName) if segmentation.GetSegmentIdBySegmentName(
-          segmentName) != '' else segmentation.AddEmptySegment(segmentName)
+          segmentName) != '' else segmentation.AddEmptySegment(segmentName, segmentName)
 
       leftSegmentId = getOrCreateSegmentIdByName(LEFT_SEGMENT_NAME)
       segmentArray = slicer.util.arrayFromSegmentBinaryLabelmap(segmentationNode, leftSegmentId, volumeNode)
