@@ -1331,7 +1331,9 @@ class ValveMoldCreatorLogic(ScriptedLoadableModuleLogic):
     for pos in annulusControlPoints.transpose():
       pProj = ValveQuantificationLogic.getPointProjectedToAnnularPlane(valveModel, pos)
       vec = pos - pProj
-      distances.append((vec / planeNormal).mean())
+      # Signed distance from the plane. It is not computed by dividing by the components of the normal:
+      # a component that is zero makes the result NaN.
+      distances.append(np.dot(vec, planeNormal) / np.dot(planeNormal, planeNormal))
     return np.array(distances).min()
 
   def createSkirts(self, valveModel, parameterNode):
