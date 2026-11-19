@@ -104,7 +104,8 @@ class ValveClipDeviceSimulatorWidget(CardiacDeviceSimulatorWidget):
   def cleanup(self):
     self.removeDeviceControlShortcutKeys()
     CardiacDeviceSimulatorWidget.cleanup(self)
-    self.disconnect()
+    if self.setupSuccessful:
+      self.disconnect()
 
   def updateGUIFromMRML(self, caller=None, event=None):
     """
