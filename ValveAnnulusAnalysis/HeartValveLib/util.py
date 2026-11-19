@@ -401,11 +401,17 @@ def remeshPolyData(poly, nVertices, subdivide):
   triangulator.PassLinesOff()
   triangulator.PassVertsOff()
   triangulator.Update()
-  wrapped = pv.wrap(triangulator.GetOutput())
-  clus = pyacvd.Clustering(wrapped)
+  # Clustering modifies its input mesh, so it is given a copy
+  triangulated = vtk.vtkPolyData()
+  triangulated.DeepCopy(triangulator.GetOutput())
+  clus = pyacvd.Clustering(pv.wrap(triangulated))
   clus.subdivide(subdivide)
   clus.cluster(nVertices)
-  return clus.create_mesh()
+  # The arrays of the created mesh use memory that Python objects of pyvista own. The mesh that is
+  # returned must not depend on them: it is used after they are deleted.
+  remeshed = vtk.vtkPolyData()
+  remeshed.DeepCopy(clus.create_mesh())
+  return remeshed
 
 
 def mergePolydata(*args):
