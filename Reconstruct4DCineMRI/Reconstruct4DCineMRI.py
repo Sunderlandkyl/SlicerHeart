@@ -460,34 +460,17 @@ class Reconstruct4DCineMRITest(ScriptedLoadableModuleTest):
 
     self.delayDisplay("Starting the test")
 
-    # Get/create input data
-
-    import SampleData
-    registerSampleData()
-    inputVolume = SampleData.downloadSample('Reconstruct4DCineMRI1')
-    self.delayDisplay('Loaded test data set')
-
-    inputScalarRange = inputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(inputScalarRange[0], 0)
-    self.assertEqual(inputScalarRange[1], 695)
-
-    outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
-    threshold = 100
-
-    # Test the module logic
-
     logic = Reconstruct4DCineMRILogic()
 
-    # Test algorithm with non-inverted threshold
-    logic.process(inputVolume, outputVolume, threshold, True)
-    outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-    self.assertEqual(outputScalarRange[1], threshold)
+    # The frames that make up each reconstructed volume are edited as text: one line per volume
+    frameIndices = [[0, 3, 6], [1, 4, 7], [2, 5, 8]]
+    frameIndicesText = logic.frameIndicesToText(frameIndices)
+    self.assertEqual(frameIndicesText, "0 3 6\n1 4 7\n2 5 8\n")
+    self.assertEqual(logic.frameIndicesFromText(frameIndicesText), frameIndices)
 
-    # Test algorithm with inverted threshold
-    logic.process(inputVolume, outputVolume, threshold, False)
-    outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-    self.assertEqual(outputScalarRange[1], inputScalarRange[1])
+    # Empty lines and repeated spaces are ignored
+    self.assertEqual(logic.frameIndicesFromText("0  3 6\n\n1 4   7\n"), [[0, 3, 6], [1, 4, 7]])
+    self.assertEqual(logic.frameIndicesFromText(""), [])
+    self.assertEqual(logic.frameIndicesToText([]), "")
 
     self.delayDisplay('Test passed')

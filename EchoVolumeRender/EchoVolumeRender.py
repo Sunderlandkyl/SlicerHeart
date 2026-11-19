@@ -723,25 +723,27 @@ class EchoVolumeRenderTest(ScriptedLoadableModuleTest):
     """
 
     self.delayDisplay("Starting the test")
-    #
-    # first, get some data
-    #
-    import urllib
-    downloads = (
-        ('http://slicer.kitware.com/midas3/download?items=5767', 'FA.nrrd', slicer.util.loadVolume),
-        )
 
-    for url,name,loader in downloads:
-      filePath = slicer.app.temporaryPath + '/' + name
-      if not os.path.exists(filePath) or os.stat(filePath).st_size == 0:
-        logging.info('Requesting download %s from %s...\n' % (name, url))
-        urllib.urlretrieve(url, filePath)
-      if loader:
-        logging.info('Loading %s...' % (name,))
-        loader(filePath)
-    self.delayDisplay('Finished with download and loading')
-
-    volumeNode = slicer.util.getNode(pattern="FA")
     logic = EchoVolumeRenderLogic()
-    self.assertIsNotNone( logic.hasImageData(volumeNode) )
+    self.assertFalse(logic.hasImageData(None))
+
+    # A volume with a single bright voxel in the middle
+    import numpy as np
+    voxels = np.zeros([20, 20, 20], dtype=np.float32)
+    voxels[10, 10, 10] = 1000.0
+    inputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "EchoVolumeRenderTest")
+    slicer.util.updateVolumeFromArray(inputVolume, voxels)
+    inputVolume.SetSpacing(0.5, 0.5, 0.5)
+    self.assertTrue(logic.hasImageData(inputVolume))
+
+    # Smoothing spreads the bright voxel to its neighbors and keeps the geometry of the volume
+    outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode", "EchoVolumeRenderTest filtered")
+    self.assertEqual(logic.smoothVolume(inputVolume, outputVolume, False, 1.0), outputVolume)
+    smoothedVoxels = slicer.util.arrayFromVolume(outputVolume)
+    self.assertEqual(smoothedVoxels.shape, voxels.shape)
+    self.assertEqual(outputVolume.GetSpacing(), inputVolume.GetSpacing())
+    self.assertLess(smoothedVoxels[10, 10, 10], 1000.0)
+    self.assertGreater(smoothedVoxels[10, 10, 11], 0.0)
+    self.assertEqual(smoothedVoxels[0, 0, 0], 0.0)
+
     self.delayDisplay('Test passed!')

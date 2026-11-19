@@ -2018,35 +2018,31 @@ class ValveMoldCreatorTest(ScriptedLoadableModuleTest):
 
     self.delayDisplay("Starting the test")
 
-    # Get/create input data
+    # The geometry utility functions that the mold is built with
 
-    import SampleData
-    registerSampleData()
-    inputVolume = SampleData.downloadSample('ValveMoldCreator1')
-    self.delayDisplay('Loaded test data set')
+    # Points of the annulus are moved away from the center by the margin
+    points = np.array([[10.0, 0.0, 0.0], [0.0, 10.0, 0.0], [-10.0, 0.0, 0.0], [0.0, -10.0, 0.0]])
+    center = np.zeros(3)
+    enlargedPoints = increaseAnnulusDiameter(points, 2.0, center)
+    np.testing.assert_allclose(np.linalg.norm(enlargedPoints - center, axis=1), 12.0)
+    np.testing.assert_allclose(enlargedPoints / 12.0, points / 10.0, atol=1e-12)
 
-    inputScalarRange = inputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(inputScalarRange[0], 0)
-    self.assertEqual(inputScalarRange[1], 695)
+    # Rotation in the plane of the annulus
+    rotationMatrix = getRotationMatrix(math.pi / 2)
+    np.testing.assert_allclose(rotationMatrix @ rotationMatrix.T, np.eye(4), atol=1e-12)
+    np.testing.assert_allclose(rotationMatrix[:2, :2], [[0.0, 1.0], [-1.0, 0.0]], atol=1e-12)
+    np.testing.assert_allclose(getRotationMatrix(0.0), np.eye(4), atol=1e-12)
 
-    outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
-    threshold = 100
+    # Translation along the normal of the annulus plane
+    sphere = vtk.vtkSphereSource()
+    sphere.Update()
+    translatedSphere = translatePolyData(sphere.GetOutput(), np.array([0.0, 0.0, 1.0]), 5.0)
+    np.testing.assert_allclose(np.array(translatedSphere.GetCenter()) - np.array(sphere.GetOutput().GetCenter()),
+                               [0.0, 0.0, 5.0], atol=1e-6)
 
-    # Test the module logic
-
-    logic = ValveMoldCreatorLogic()
-
-    # Test algorithm with non-inverted threshold
-    logic.process(inputVolume, outputVolume, threshold, True)
-    outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-    self.assertEqual(outputScalarRange[1], threshold)
-
-    # Test algorithm with inverted threshold
-    logic.process(inputVolume, outputVolume, threshold, False)
-    outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-    self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-    self.assertEqual(outputScalarRange[1], inputScalarRange[1])
+    merged = mergePolydata(sphere.GetOutput(), translatedSphere)
+    self.assertEqual(merged.GetNumberOfPoints(), 2 * sphere.GetOutput().GetNumberOfPoints())
+    self.assertEqual(merged.GetNumberOfCells(), 2 * sphere.GetOutput().GetNumberOfCells())
 
     self.delayDisplay('Test passed')
 

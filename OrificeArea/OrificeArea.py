@@ -950,34 +950,28 @@ class OrificeAreaTest(ScriptedLoadableModuleTest):
 
         self.delayDisplay("Starting the test")
 
-        # Get/create input data
-
-        import SampleData
-        registerSampleData()
-        inputVolume = SampleData.downloadSample('OrificeArea1')
-        self.delayDisplay('Loaded test data set')
-
-        inputScalarRange = inputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(inputScalarRange[0], 0)
-        self.assertEqual(inputScalarRange[1], 695)
-
-        outputVolume = slicer.mrmlScene.AddNewNodeByClass("vtkMRMLScalarVolumeNode")
-        threshold = 100
-
-        # Test the module logic
-
+        import math
         logic = OrificeAreaLogic()
 
-        # Test algorithm with non-inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, True)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], threshold)
+        # Area of a 10 mm x 20 mm rectangle, made of triangles
+        plane = vtk.vtkPlaneSource()
+        plane.SetOrigin(0.0, 0.0, 0.0)
+        plane.SetPoint1(10.0, 0.0, 0.0)
+        plane.SetPoint2(0.0, 20.0, 0.0)
+        plane.SetResolution(5, 8)
+        triangulator = vtk.vtkTriangleFilter()
+        triangulator.SetInputConnection(plane.GetOutputPort())
+        triangulator.Update()
+        self.assertAlmostEqual(logic.surfaceArea(triangulator.GetOutput()), 200.0, places=5)
 
-        # Test algorithm with inverted threshold
-        logic.process(inputVolume, outputVolume, threshold, False)
-        outputScalarRange = outputVolume.GetImageData().GetScalarRange()
-        self.assertEqual(outputScalarRange[0], inputScalarRange[0])
-        self.assertEqual(outputScalarRange[1], inputScalarRange[1])
+        # Area of a sphere of 10 mm radius
+        sphere = vtk.vtkSphereSource()
+        sphere.SetRadius(10.0)
+        sphere.SetThetaResolution(100)
+        sphere.SetPhiResolution(100)
+        triangulator.SetInputConnection(sphere.GetOutputPort())
+        triangulator.Update()
+        sphereArea = 4.0 * math.pi * 10.0 * 10.0
+        self.assertAlmostEqual(logic.surfaceArea(triangulator.GetOutput()), sphereArea, delta=sphereArea * 0.01)
 
         self.delayDisplay('Test passed')
